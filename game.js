@@ -4,7 +4,7 @@ class StartScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('startBackground', 'https://i.imgur.com/ginNRgE.png');
+    this.load.image('startBackground', 'https://i.imgur.com/y2yUNvZ.png');
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
 
@@ -28,8 +28,6 @@ class StartScene extends Phaser.Scene {
     // Set the background image for the start menu and make it fit the screen
     this.add.image(240, 400, 'startBackground').setScale(0.5);
 
-    // Add a title in the center
-    this.add.text(240, 250, 'Добро пожаловать в игру!', { fontSize: '32px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
 
     // Create a start button
     const startButton = this.add.text(240, 350, 'Начать игру', { fontSize: '32px', fill: '#fff', backgroundColor: '#cf3517', padding: { x: 10, y: 5 }, fontStyle: 'bold' })
