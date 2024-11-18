@@ -1,0 +1,52 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+    overflow: hidden;
+    flex-direction: column;
+  }
+  
+  .menu {
+    text-align: center;
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  .background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+  }
+  
+  .start-button {
+    background-color: #c5d15d; /* Green */
+    color: rgb(182, 121, 30);
+    padding: 10px 24px;
+    font-size: 24px;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  
+  .start-button:hover {
+    background-color: #b2d455;
+  }
+  
+  #game-container {
+    width: 90vw;  /* 90% of the viewport width */
+    height: 160vh; /* 160% of the viewport height to maintain 9:16 ratio */
+    max-width: 540px; /* Limit to 540px max width */
+    max-height: 960px; /* Limit to 960px max height */
+  }
+  
