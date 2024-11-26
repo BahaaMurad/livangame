@@ -4,6 +4,7 @@ const fs = require('fs');
 const cors = require('cors'); // Import the cors package
 
 const app = express();
+const PORT = 3000;
 
 // Use CORS middleware to allow requests from all origins (or specify your origin if needed)
 app.use(cors());
@@ -20,7 +21,7 @@ app.post('/api/save-name', (req, res) => {
   }
 
   try {
-    // Append player name to a file (you may need to adjust file handling in Glitch)
+    // Append player name to a file
     fs.appendFileSync('players.txt', `${name}\n`);
     console.log(`Имя сохранено: ${name}`);
     res.json({ message: 'Имя успешно сохранено' });
@@ -30,8 +31,7 @@ app.post('/api/save-name', (req, res) => {
   }
 });
 
-// Start the server on the port defined by Glitch (process.env.PORT)
-const port = process.env.PORT || 3000;  // Glitch sets process.env.PORT, so we use it if available
-app.listen(port, () => {
-  console.log(`Сервер запущен на порту ${port}`);
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Сервер запущен на http://localhost:${PORT}`);
 });
