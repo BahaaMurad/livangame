@@ -8,26 +8,33 @@ class StartScene extends Phaser.Scene {
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
 
-  create() {
+  create(data) {
     this.backgroundMusic = this.sound.add('backgroundMusic', { loop: true });
     this.backgroundMusic.play();
 
     const musicToggle = this.add.text(450, 16, '🔊', { fontSize: '32px', fill: '#fff' })
-    .setInteractive()
-    .setOrigin(0.5)
-    .setDepth(10)  // Ensure it is rendered above other elements like background
-    .on('pointerdown', () => {
-      if (this.backgroundMusic.isPlaying) {
-        this.backgroundMusic.pause();  // Pause the music
-        musicToggle.setText('🔇');     // Change button to mute icon
-      } else {
-        this.backgroundMusic.resume(); // Resume the music
-        musicToggle.setText('🔊');     // Change button to unmute icon
-      }
-    });
+      .setInteractive()
+      .setOrigin(0.5)
+      .setDepth(10)  // Ensure it is rendered above other elements like background
+      .on('pointerdown', () => {
+        if (this.backgroundMusic.isPlaying) {
+          this.backgroundMusic.pause();  // Pause the music
+          musicToggle.setText('🔇');     // Change button to mute icon
+        } else {
+          this.backgroundMusic.resume(); // Resume the music
+          musicToggle.setText('🔊');     // Change button to unmute icon
+        }
+      });
+
     // Set the background image for the start menu and make it fit the screen
     this.add.image(240, 400, 'startBackground').setScale(0.5);
 
+    // Show the player's name on the start screen
+    const playerNameText = this.add.text(240, 250, `Привет, ${data.playerName}`, {
+      fontSize: '32px',
+      fill: '#fff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
 
     // Create a start button
     const startButton = this.add.text(240, 350, 'Начать игру', { fontSize: '32px', fill: '#fff', backgroundColor: '#cf3517', padding: { x: 10, y: 5 }, fontStyle: 'bold' })
@@ -35,7 +42,7 @@ class StartScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     startButton.on('pointerdown', () => {
-      this.scene.start('GameScene');
+      this.scene.start('GameScene', { playerName: data.playerName });
     });
   }
 }
@@ -52,7 +59,14 @@ class GameScene extends Phaser.Scene {
     this.load.image('background', 'https://i.imgur.com/R06cLdY.png');
   }
 
-  create() {
+  create(data) {
+    // Display player name in the game scene
+    const playerNameText = this.add.text(240, 16, `Игрок: ${data.playerName}`, {
+      fontSize: '32px',
+      fill: '#fff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
     // Create background image
     this.background = this.add.tileSprite(0, 0, 480, 800, 'background');
     this.background.setOrigin(0, 0);
@@ -64,7 +78,6 @@ class GameScene extends Phaser.Scene {
 
     // Initialize score
     this.score = 0;
-    // Style the score text: bold, centered, and positioned at the top left
     this.scoreText = this.add.text(16, 16, 'Очки: 0', { 
       fontSize: '32px', 
       fill: '#fff', 
@@ -75,15 +88,12 @@ class GameScene extends Phaser.Scene {
     });
 
     // Game over text and restart button (initially hidden)
-    this.endText = this.add.text(240, 300, 'Игра окончена!', { fontSize: '48px', fill: '#fff', fontStyle: 'bold', backgroundColor: '#425234' }).setOrigin(0.5).setVisible(false)
-    .setOrigin(0.5)
-    .setVisible(false)
-    .setDepth(10);
+    this.endText = this.add.text(240, 300, 'Игра окончена!', { fontSize: '48px', fill: '#fff', fontStyle: 'bold', backgroundColor: '#425234' }).setOrigin(0.5).setVisible(false);
     this.restartButton = this.add.text(240, 400, 'ПЕРЕИГРАТЬ', { fontSize: '32px', fill: '#fff', fontStyle: 'bold', backgroundColor: '#425234', padding: { x: 10, y: 5 } })
       .setOrigin(0.5)
       .setInteractive()
-      .setVisible(false)
-      .setDepth(10);
+      .setVisible(false);
+
     this.restartButton.on('pointerdown', this.restartGame, this);
 
     // Set up controls
