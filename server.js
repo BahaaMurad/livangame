@@ -4,25 +4,31 @@ const fs = require('fs');
 const cors = require('cors'); // Import the cors package
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // Use Render's environment port or default to 3000
 
 // Use CORS middleware to allow requests from all origins (or specify your origin if needed)
-app.use(cors());
+app.use(cors({
+  origin: '*', // Replace '*' with specific domains for production
+  methods: ['POST', 'GET', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
 
 // Parse JSON bodies
 app.use(bodyParser.json());
 
 // API endpoint to save player name
 app.post('/api/save-name', (req, res) => {
+  console.log('Received request:', req.body); // Log request body
   const { name } = req.body;
 
   if (!name) {
+    console.log('Name not provided');
     return res.status(400).json({ error: 'Имя не указано' });
   }
 
   try {
-    // Append player name to a file
-    fs.appendFileSync('players.txt', `${name}\n`);
+    const filePath = './players.txt'; // Path to file
+    fs.appendFileSync(filePath, `${name}\n`);
     console.log(`Имя сохранено: ${name}`);
     res.json({ message: 'Имя успешно сохранено' });
   } catch (error) {
