@@ -47,6 +47,7 @@ class StartScene extends Phaser.Scene {
         return; // Do not start the game if name is not entered
       }
 
+      // Start the game and pass the playerName as part of the data
       this.scene.start('GameScene', { playerName: playerName });
     });
   }
@@ -66,7 +67,8 @@ class GameScene extends Phaser.Scene {
 
   create(data) {
     // Display player name in the game scene
-    const playerNameText = this.add.text(240, 16, `Игрок: ${data.playerName}`, {
+    this.playerName = data.playerName; // Get player name passed from StartScene
+    const playerNameText = this.add.text(240, 16, `Игрок: ${this.playerName}`, {
       fontSize: '32px',
       fill: '#fff',
       fontStyle: 'bold'
@@ -93,11 +95,16 @@ class GameScene extends Phaser.Scene {
     });
 
     // Game over text and restart button (initially hidden)
-    this.endText = this.add.text(240, 300, 'Игра окончена!', { fontSize: '48px', fill: '#fff', fontStyle: 'bold', backgroundColor: '#425234' }).setOrigin(0.5).setVisible(false);
+    this.endText = this.add.text(240, 300, 'Игра окончена!', { fontSize: '48px', fill: '#fff', fontStyle: 'bold', backgroundColor: '#425234' })
+      .setOrigin(0.5)
+      .setVisible(false)
+      .setDepth(10);  // Set depth to ensure it's on top
+
     this.restartButton = this.add.text(240, 400, 'ПЕРЕИГРАТЬ', { fontSize: '32px', fill: '#fff', fontStyle: 'bold', backgroundColor: '#425234', padding: { x: 10, y: 5 } })
       .setOrigin(0.5)
       .setInteractive()
-      .setVisible(false);
+      .setVisible(false)
+      .setDepth(10);  // Set depth to ensure it's on top
 
     this.restartButton.on('pointerdown', this.restartGame, this);
 
@@ -150,7 +157,9 @@ class GameScene extends Phaser.Scene {
       this.physics.pause();
       player.setTint(0xff0000);
       this.gameOver = true;
-      this.endText.setText('Игра окончена!\nОчки: ' + Math.floor(this.score)).setVisible(true);
+
+      // Update the endText with player's name and score
+      this.endText.setText(`Игра окончена!\nИгрок: ${this.playerName}\nОчки: ${Math.floor(this.score)}`).setVisible(true);
       this.restartButton.setVisible(true);
     } else {
       this.score += 5;
