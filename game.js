@@ -47,11 +47,31 @@ class StartScene extends Phaser.Scene {
         return; // Do not start the game if name is not entered
       }
 
-      // Start the game and pass the playerName as part of the data
-      this.scene.start('GameScene', { playerName: playerName });
+       // Send player's name to the server
+       this.savePlayerName(playerName);
+
+       // Start the game and pass the playerName as part of the data
+       this.scene.start('GameScene', { playerName: playerName });
     });
+  } 
+  savePlayerName(name) {
+    fetch('https://livangame.onrender.com/api/save-name', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data.message); // Handle success
+      })
+      .catch(error => {
+        console.error('Ошибка при сохранении имени:', error);
+      });
   }
 }
+
 
 class GameScene extends Phaser.Scene {
   constructor() {
