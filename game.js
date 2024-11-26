@@ -8,7 +8,7 @@ class StartScene extends Phaser.Scene {
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
 
-  create(data) {
+  create() {
     this.backgroundMusic = this.sound.add('backgroundMusic', { loop: true });
     this.backgroundMusic.play();
 
@@ -29,12 +29,10 @@ class StartScene extends Phaser.Scene {
     // Set the background image for the start menu and make it fit the screen
     this.add.image(240, 400, 'startBackground').setScale(0.5);
 
-    // Show the player's name on the start screen
-    const playerNameText = this.add.text(240, 250, `Привет, ${data.playerName}`, {
-      fontSize: '32px',
-      fill: '#fff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    // Create the player name input field
+    const playerNameInput = this.add.dom(240, 250).createFromHTML(`
+      <input type="text" id="playerName" placeholder="Enter your name" style="font-size: 24px; padding: 10px; border-radius: 5px; text-align: center;"/>
+    `);
 
     // Create a start button
     const startButton = this.add.text(240, 350, 'Начать игру', { fontSize: '32px', fill: '#fff', backgroundColor: '#cf3517', padding: { x: 10, y: 5 }, fontStyle: 'bold' })
@@ -42,7 +40,14 @@ class StartScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     startButton.on('pointerdown', () => {
-      this.scene.start('GameScene', { playerName: data.playerName });
+      const playerName = document.getElementById('playerName').value.trim();
+
+      if (playerName === '') {
+        alert('Пожалуйста, введите ваше имя!'); // Alert if the name is empty
+        return; // Do not start the game if name is not entered
+      }
+
+      this.scene.start('GameScene', { playerName: playerName });
     });
   }
 }
