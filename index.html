@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phaser Game</title>
+  <title>Phaser Game with Firebase</title>
   <link rel="stylesheet" href="style.css">
   <style>
     body {
@@ -61,23 +61,72 @@
   <!-- Phaser JS library -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
 
-  <!-- Game script -->
-  <script src="game.js"></script>
+  <!-- Firebase Initialization -->
+  <script type="module">
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-  <script>
-    // Handle HTML input
-    document.getElementById('startButton').addEventListener('click', () => {
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnMxgEnR2YYDmnuMMhhltvoC3rNYaSlS8",
+      authDomain: "livangame-2333b.firebaseapp.com",
+      projectId: "livangame-2333b",
+      storageBucket: "livangame-2333b.firebasestorage.app",
+      messagingSenderId: "556982217572",
+      appId: "1:556982217572:web:739acd58222c0ef3042871",
+      measurementId: "G-2MR1PD2YMD"
+    };
+
+    // Initialize Firebase and Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Save player name to Firestore
+    async function savePlayerName(name) {
+      try {
+        await addDoc(collection(db, "players"), { name: name });
+        console.log(`Player name "${name}" saved to Firestore.`);
+      } catch (error) {
+        console.error("Error saving player name: ", error);
+      }
+    }
+
+    // Handle Start Button Click
+    document.getElementById('startButton').addEventListener('click', async () => {
       const playerName = document.getElementById('playerName').value.trim();
       if (playerName) {
         // Hide the overlay
         document.getElementById('overlay').style.display = 'none';
 
+        // Save the player's name to Firestore
+        await savePlayerName(playerName);
+
         // Start the Phaser game with the player's name
-        game.scene.start('StartScene', { playerName });
+        startGame(playerName);
       } else {
         alert('Please enter your name.');
       }
     });
+
+    function startGame(playerName) {
+      const gameConfig = {
+        type: Phaser.AUTO,
+        width: 480,
+        height: 800,
+        parent: 'game-container',
+        scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+        scene: [StartScene, GameScene],
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+      };
+
+      const game = new Phaser.Game(gameConfig);
+
+      game.scene.start('StartScene', { playerName: playerName });
+    }
   </script>
+
+  <!-- Game script -->
+  <script src="game.js"></script>
 </body>
 </html>
