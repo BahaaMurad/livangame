@@ -8,7 +8,7 @@ class StartScene extends Phaser.Scene {
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
 
-  create() {
+  create(data) {
     this.backgroundMusic = this.sound.add('backgroundMusic', { loop: true });
     this.backgroundMusic.play();
 
@@ -42,7 +42,7 @@ class StartScene extends Phaser.Scene {
       .setInteractive()
       .setOrigin(0.5);
 
-    startButton.on('pointerdown', async () => {
+    startButton.on('pointerdown', () => {
       const playerName = document.getElementById('playerName').value.trim();
 
       if (playerName === '') {
@@ -50,11 +50,7 @@ class StartScene extends Phaser.Scene {
         return;
       }
 
-      // Check if the player exists or create a new entry
-      const playerData = await checkOrCreatePlayer(playerName);
-
-      // Start the game and pass player data
-      this.scene.start('GameScene', { playerName: playerName, highScore: playerData.highScore });
+      this.scene.start('GameScene', { playerName });
     });
   }
 }
@@ -73,36 +69,58 @@ class GameScene extends Phaser.Scene {
 
   create(data) {
     this.playerName = data.playerName;
-    this.highScore = data.highScore || 0;
 
-    this.add.text(240, 16, `Игрок: ${this.playerName}`, {
+    const playerNameText = this.add.text(240, 16, `Игрок: ${this.playerName}`, {
       fontSize: '32px',
       fill: '#fff',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
+    this.background = this.add.tileSprite(0, 0, 480, 800, 'background');
+    this.background.setOrigin(0, 0);
+
+    this.player = this.physics.add.sprite(240, 700, 'player');
+    this.player.setCollideWorldBounds(true);
+    this.player.setScale(0.3);
+
+    this.score = 0;
     this.scoreText = this.add.text(16, 16, 'Очки: 0', {
       fontSize: '32px',
       fill: '#fff',
       fontWeight: 'bold',
+      fontFamily: 'Arial',
+      padding: { x: 10, y: 5 },
       backgroundColor: '#425234',
     });
 
-    this.highScoreText = this.add.text(16, 56, `Рекорд: ${this.highScore}`, {
+    this.endText = this.add.text(240, 300, 'Игра окончена!', {
+      fontSize: '48px',
+      fill: '#fff',
+      fontStyle: 'bold',
+      backgroundColor: '#425234',
+    })
+      .setOrigin(0.5)
+      .setVisible(false)
+      .setDepth(10);
+
+    this.restartButton = this.add.text(240, 400, 'ПЕРЕИГРАТЬ', {
       fontSize: '32px',
       fill: '#fff',
-      fontWeight: 'bold',
+      fontStyle: 'bold',
       backgroundColor: '#425234',
-    });
+      padding: { x: 10, y: 5 },
+    })
+      .setOrigin(0.5)
+      .setInteractive()
+      .setVisible(false)
+      .setDepth(10);
 
-    this.background = this.add.tileSprite(0, 0, 480, 800, 'background');
-    this.background.setOrigin(0, 0);
+    this.restartButton.on('pointerdown', this.restartGame, this);
 
-    this.player = this.physics.add.sprite(240, 700, 'player').setCollideWorldBounds(true).setScale(0.3);
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.input.on('pointermove', this.pointerMove, this);
 
-    this.score = 0;
     this.obstacles = this.physics.add.group();
-
     this.time.addEvent({
       delay: 1500,
       callback: this.spawnObstacle,
@@ -110,16 +128,25 @@ class GameScene extends Phaser.Scene {
       loop: true,
     });
 
-    this.physics.add.overlap(this.player, this.obstacles, this.handleCollision, null, this);
+    this.physics.add.overlap(this.player, this.obstacles, this.handleObstacleCollision, null, this);
   }
 
   update() {
+    if (this.gameOver) return;
+
     this.background.tilePositionY -= 1;
+
+    this.player.setVelocity(0);
+    if (this.cursors.left.isDown) this.player.setVelocityX(-160);
+    if (this.cursors.right.isDown) this.player.setVelocityX(160);
+
     this.score += 0.01;
-    this.scoreText.setText(`Очки: ${Math.floor(this.score)}`);
+    this.scoreText.setText('Очки: ' + Math.floor(this.score));
   }
 
   spawnObstacle() {
+    if (this.gameOver) return;
+
     const obstacleType = Phaser.Math.Between(0, 1) === 0 ? 'dangerObstacle' : 'bonusObstacle';
     const xPosition = Phaser.Math.Between(50, 430);
     const obstacle = this.obstacles.create(xPosition, 0, obstacleType).setVelocityY(200).setScale(0.2);
@@ -127,36 +154,46 @@ class GameScene extends Phaser.Scene {
     obstacle.isDanger = obstacleType === 'dangerObstacle';
   }
 
-  async handleCollision(player, obstacle) {
+  handleObstacleCollision(player, obstacle) {
     if (obstacle.isDanger) {
       this.physics.pause();
       player.setTint(0xff0000);
+      this.gameOver = true;
 
-      const newScore = Math.floor(this.score);
-      if (newScore > this.highScore) {
-        await updateHighScore(this.playerName, newScore);
-      }
+      this.endText.setText(`Игра окончена!\nИгрок: ${this.playerName}\nОчки: ${Math.floor(this.score)}`).setVisible(true);
+      this.restartButton.setVisible(true);
     } else {
       this.score += 5;
+      this.scoreText.setText('Очки: ' + Math.floor(this.score));
     }
     obstacle.destroy();
   }
-}
 
-// Firebase logic
-async function checkOrCreatePlayer(name) {
-  const docRef = doc(db, 'players', name);
-  const docSnap = await getDoc(docRef);
+  restartGame() {
+    this.endText.setVisible(false);
+    this.restartButton.setVisible(false);
+    this.score = 0;
+    this.gameOver = false;
+    this.player.clearTint();
+    this.player.setPosition(240, 700);
+    this.obstacles.clear(true, true);
+    this.physics.resume();
+  }
 
-  if (docSnap.exists()) {
-    return docSnap.data();
-  } else {
-    await setDoc(docRef, { name: name, highScore: 0 });
-    return { name: name, highScore: 0 };
+  pointerMove(pointer) {
+    if (this.gameOver) return;
+    this.player.setVelocityX(pointer.x < this.player.x ? -160 : 160);
   }
 }
 
-async function updateHighScore(name, score) {
-  const docRef = doc(db, 'players', name);
-  await updateDoc(docRef, { highScore: score });
-}
+const config = {
+  type: Phaser.AUTO,
+  width: 480,
+  height: 800,
+  parent: 'game-container',
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scene: [StartScene, GameScene],
+  physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+};
+
+new Phaser.Game(config);
