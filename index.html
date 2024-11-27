@@ -47,7 +47,6 @@
   </style>
 </head>
 <body>
-  <!-- Overlay for name input -->
   <div id="overlay">
     <div id="nameForm">
       <input type="text" id="playerName" placeholder="Enter your name">
@@ -55,19 +54,13 @@
     </div>
   </div>
 
-  <!-- Game container for Phaser -->
   <div id="game-container"></div>
 
-  <!-- Phaser JS library -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
-
-  <!-- Firebase Initialization -->
   <script type="module">
-    // Import Firebase SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDnMxgEnR2YYDmnuMMhhltvoC3rNYaSlS8",
       authDomain: "livangame-2333b.firebaseapp.com",
@@ -78,31 +71,23 @@
       measurementId: "G-2MR1PD2YMD"
     };
 
-    // Initialize Firebase and Firestore
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Save player name to Firestore
     async function savePlayerName(name) {
       try {
         await addDoc(collection(db, "players"), { name: name });
         console.log(`Player name "${name}" saved to Firestore.`);
       } catch (error) {
-        console.error("Error saving player name: ", error);
+        console.error("Error saving player name:", error);
       }
     }
 
-    // Handle Start Button Click
     document.getElementById('startButton').addEventListener('click', async () => {
       const playerName = document.getElementById('playerName').value.trim();
       if (playerName) {
-        // Hide the overlay
         document.getElementById('overlay').style.display = 'none';
-
-        // Save the player's name to Firestore
         await savePlayerName(playerName);
-
-        // Start the Phaser game with the player's name
         startGame(playerName);
       } else {
         alert('Please enter your name.');
@@ -121,12 +106,9 @@
       };
 
       const game = new Phaser.Game(gameConfig);
-
-      game.scene.start('StartScene', { playerName: playerName });
+      game.scene.start('StartScene', { playerName });
     }
   </script>
-
-  <!-- Game script -->
   <script src="game.js"></script>
 </body>
 </html>
