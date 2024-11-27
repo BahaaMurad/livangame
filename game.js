@@ -1,4 +1,3 @@
-// Game class definition
 class StartScene extends Phaser.Scene {
   constructor() {
     super({ key: 'StartScene' });
@@ -9,7 +8,7 @@ class StartScene extends Phaser.Scene {
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
 
-  create() {
+  create(data) {
     this.backgroundMusic = this.sound.add('backgroundMusic', { loop: true });
     this.backgroundMusic.play();
 
@@ -51,10 +50,7 @@ class StartScene extends Phaser.Scene {
         return;
       }
 
-      // Save player name (Firebase integration)
-      savePlayerName(playerName);
-
-      this.scene.start('GameScene', { playerName: playerName });
+      this.scene.start('GameScene', { playerName });
     });
   }
 }
@@ -190,37 +186,6 @@ class GameScene extends Phaser.Scene {
   }
 }
 
-// Function to save player name to Firebase
-async function savePlayerName(name) {
-  try {
-    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js');
-    const { getFirestore, collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js');
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDnMxgEnR2YYDmnuMMhhltvoC3rNYaSlS8",
-      authDomain: "livangame-2333b.firebaseapp.com",
-      projectId: "livangame-2333b",
-      storageBucket: "livangame-2333b.firebasestorage.app",
-      messagingSenderId: "556982217572",
-      appId: "1:556982217572:web:739acd58222c0ef3042871",
-      measurementId: "G-2MR1PD2YMD"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    await addDoc(collection(db, 'players'), {
-      name: name,
-      createdAt: serverTimestamp(),
-    });
-
-    console.log(`Player name "${name}" saved to Firebase!`);
-  } catch (error) {
-    console.error('Ошибка при сохранении имени:', error);
-  }
-}
-
-// Phaser game configuration
 const config = {
   type: Phaser.AUTO,
   width: 480,
