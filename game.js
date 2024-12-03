@@ -9,20 +9,12 @@ class StartScene extends Phaser.Scene {
   }
 
   create(data) {
-    // Check if background music already exists and play only once
     if (!this.sys.game.backgroundMusic) {
       this.sys.game.backgroundMusic = this.sound.add('backgroundMusic', { loop: true });
     }
-  
-    // Play music only if it’s not already playing
-    if (!this.sys.game.backgroundMusic.isPlaying) {
-      this.sys.game.backgroundMusic.play();
-    }
-  
-    // Reference the global music instance locally
+
     this.backgroundMusic = this.sys.game.backgroundMusic;
-  
-    // Mute button logic
+
     const musicToggle = this.add.text(450, 16, '🔊', { fontSize: '32px', fill: '#fff' })
       .setInteractive()
       .setOrigin(0.5)
@@ -36,12 +28,11 @@ class StartScene extends Phaser.Scene {
           musicToggle.setText('🔊');
         }
       });
-  
 
     this.add.image(240, 400, 'startBackground').setScale(0.5);
 
     const playerNameInput = this.add.dom(240, 250).createFromHTML(`
-      <input type="text" id="playerName" placeholder="Enter your name" style="font-size: 24px; padding: 10px; border-radius: 5px; text-align: center;"/>
+      <input type="text" id="playerName" placeholder="введите ваше имя!" style="font-size: 24px; padding: 10px; border-radius: 5px; text-align: center;"/>
     `);
 
     const startButton = this.add.text(240, 350, 'Начать игру', {
@@ -54,17 +45,18 @@ class StartScene extends Phaser.Scene {
       .setInteractive()
       .setOrigin(0.5);
 
-      startButton.on('pointerdown', async () => {
-        const playerName = document.getElementById('playerName').value.trim();
-      
-        if (playerName === '') {
-          alert('Пожалуйста, введите ваше имя!');
-          return;
-        }
-      
-        const playerData = await window.getOrCreatePlayer(playerName);
-        this.scene.start('GameScene', { playerData });
-      });
+    startButton.on('pointerdown', async () => {
+      const playerName = document.getElementById('playerName').value.trim();
+
+      if (playerName === '') {
+        alert('Пожалуйста, введите ваше имя!');
+        return;
+      }
+
+      const playerData = await window.getOrCreatePlayer(playerName);
+      this.backgroundMusic.play();
+      this.scene.start('GameScene', { playerData });
+    });
   }
 }
 
@@ -78,11 +70,12 @@ class GameScene extends Phaser.Scene {
     this.load.image('dangerObstacle', 'https://i.imgur.com/t9U0UAN.png');
     this.load.image('bonusObstacle', 'https://i.imgur.com/5HHXX0s.png');
     this.load.image('background', 'https://i.imgur.com/R06cLdY.png');
+    this.load.image('explosion', 'https://i.imgur.com/O6KYKe2.png'); // Explosion image
   }
 
   create(data) {
-    this.playerData = data.playerData; // Save the full player data object
-  
+    this.playerData = data.playerData;
+
     const playerNameText = this.add.text(240, 16, `Игрок: ${this.playerData.name}`, {
       fontSize: '32px',
       fill: '#fff',
@@ -150,8 +143,8 @@ class GameScene extends Phaser.Scene {
     this.background.tilePositionY -= 1;
 
     this.player.setVelocity(0);
-    if (this.cursors.left.isDown) this.player.setVelocityX(-160);
-    if (this.cursors.right.isDown) this.player.setVelocityX(160);
+    if (this.cursors.left.isDown) this.player.setVelocityX(-300);
+    if (this.cursors.right.isDown) this.player.setVelocityX(300);
 
     this.score += 0.01;
     this.scoreText.setText('Очки: ' + Math.floor(this.score));
@@ -169,15 +162,22 @@ class GameScene extends Phaser.Scene {
 
   async handleObstacleCollision(player, obstacle) {
     if (obstacle.isDanger) {
+      // Remove any existing explosion before creating a new one
+      if (this.explosion) {
+        this.explosion.destroy();
+      }
+
+      // Create a new explosion image at the obstacle's position
+      this.explosion = this.add.image(obstacle.x, obstacle.y, 'explosion').setScale(0.2);
+
       this.physics.pause();
       player.setTint(0xff0000);
       this.gameOver = true;
-  
+
       const finalScore = Math.floor(this.score);
       this.endText.setText(`Игра окончена!\nИгрок: ${this.playerData.name}\nОчки: ${finalScore}`).setVisible(true);
       this.restartButton.setVisible(true);
-  
-      // Update the high score in Firebase
+
       if (this.playerData && this.playerData.id) {
         try {
           await window.updateHighScore(this.playerData.id, finalScore);
@@ -193,6 +193,7 @@ class GameScene extends Phaser.Scene {
     obstacle.destroy();
   }
 
+
   restartGame() {
     this.endText.setVisible(false);
     this.restartButton.setVisible(false);
@@ -201,14 +202,19 @@ class GameScene extends Phaser.Scene {
     this.player.clearTint();
     this.player.setPosition(240, 700);
     this.obstacles.clear(true, true);
-    this.physics.resume();
-  }
 
+    // Destroy the explosion image if it exists
+    if (this.explosion) {
+        this.explosion.destroy();
+        this.explosion = null;
+    }
+
+    this.physics.resume();
+}
   pointerMove(pointer) {
     if (this.gameOver) return;
-    this.player.setVelocityX(pointer.x < this.player.x ? -160 : 160);
+    this.player.setVelocityX(pointer.x < this.player.x ? -300 : 300);
   }
-  
 }
 
 const config = {
