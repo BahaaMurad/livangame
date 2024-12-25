@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phaser Game with Firebase</title>
+  <title>Shawerma Hero</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="overlay">
     <div id="nameForm">
-      <input type="text" id="playerName" placeholder="Enter your name">
-      <button id="startButton">Start Game</button>
+      <input type="text" id="playerName" placeholder="Введите ваше имя!" required>
+      <input type="tel" id="playerPhone" placeholder="Введите ваш номер телефона!" 
+  style="width: 270px; height: 30px; font-size: 18px; padding: 10px; border-radius: 10px;"
+   required>
+      <button id="startButton">Начать игру</button>
     </div>
   </div>
 
@@ -25,7 +28,7 @@
       apiKey: "AIzaSyDnMxgEnR2YYDmnuMMhhltvoC3rNYaSlS8",
       authDomain: "livangame-2333b.firebaseapp.com",
       projectId: "livangame-2333b",
-      storageBucket: "livangame-2333b.firebasestorage.app",
+      storageBucket: "livangame-2333b.appspot.com",
       messagingSenderId: "556982217572",
       appId: "1:556982217572:web:739acd58222c0ef3042871",
       measurementId: "G-2MR1PD2YMD"
@@ -34,18 +37,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    window.getOrCreatePlayer = async (name) => {
+    window.getOrCreatePlayer = async (name, phone) => {
       const playersRef = collection(db, "players");
-      const q = query(playersRef, where("name", "==", name));
+      const q = query(playersRef, where("name", "==", name), where("phone", "==", phone));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
         const playerDoc = querySnapshot.docs[0];
         const playerData = playerDoc.data();
-        return { name, highscore: playerData.highscore || 0, id: playerDoc.id };
+        return { name, phone, highscore: playerData.highscore || 0, id: playerDoc.id };
       } else {
-        const newPlayerRef = await addDoc(playersRef, { name, highscore: 0 });
-        return { name, highscore: 0, id: newPlayerRef.id };
+        const newPlayerRef = await addDoc(playersRef, { name, phone, highscore: 0 });
+        return { name, phone, highscore: 0, id: newPlayerRef.id };
       }
     };
 
@@ -60,12 +63,20 @@
 
     document.getElementById("startButton").addEventListener("click", async () => {
       const playerName = document.getElementById("playerName").value.trim();
-      if (playerName) {
-        const playerData = await window.getOrCreatePlayer(playerName);
+      const playerPhone = document.getElementById("playerPhone").value.trim();
+
+      if (!playerName || !playerPhone) {
+        alert("Пожалуйста, введите ваше имя и номер телефона!");
+        return;
+      }
+
+      try {
+        const playerData = await window.getOrCreatePlayer(playerName, playerPhone);
         document.getElementById("overlay").style.display = "none";
         startGame(playerData);
-      } else {
-        alert("Please enter your name.");
+      } catch (error) {
+        console.error("Error starting the game:", error);
+        alert("Произошла ошибка при запуске игры. Попробуйте снова.");
       }
     });
 
