@@ -31,10 +31,6 @@ class StartScene extends Phaser.Scene {
 
     this.add.image(240, 400, 'startBackground').setScale(0.5);
 
-    const playerNameInput = this.add.dom(240, 250).createFromHTML(`
-      <input type="text" id="playerName" placeholder="введите ваше имя!" style="font-size: 24px; padding: 10px; border-radius: 5px; text-align: center;"/>
-    `);
-
     const startButton = this.add.text(240, 350, 'Начать игру', {
       fontSize: '32px',
       fill: '#fff',
@@ -47,15 +43,21 @@ class StartScene extends Phaser.Scene {
 
     startButton.on('pointerdown', async () => {
       const playerName = document.getElementById('playerName').value.trim();
+      const playerPhone = document.getElementById('playerPhone').value.trim();
 
-      if (playerName === '') {
-        alert('Пожалуйста, введите ваше имя!');
+      if (!playerName || !playerPhone) {
+        alert('Пожалуйста, введите ваше имя и номер телефона!');
         return;
       }
 
-      const playerData = await window.getOrCreatePlayer(playerName);
-      this.backgroundMusic.play();
-      this.scene.start('GameScene', { playerData });
+      try {
+        const playerData = await window.getOrCreatePlayer(playerName, playerPhone);
+        this.backgroundMusic.play();
+        this.scene.start('GameScene', { playerData });
+      } catch (error) {
+        console.error('Error starting game:', error);
+        alert('Произошла ошибка при запуске игры. Попробуйте снова.');
+      }
     });
   }
 }
@@ -69,6 +71,7 @@ class GameScene extends Phaser.Scene {
     this.load.image('player', 'https://i.imgur.com/q7ZEJHs.png');
     this.load.image('dangerObstacle', 'https://i.imgur.com/t9U0UAN.png');
     this.load.image('bonusObstacle', 'https://i.imgur.com/5HHXX0s.png');
+    this.load.image('shieldPowerUp', 'https://i.imgur.com/E4OrBOX.png'); // Shield power-up image
     this.load.image('background', 'https://i.imgur.com/R06cLdY.png');
     this.load.image('explosion', 'https://i.imgur.com/O6KYKe2.png'); // Explosion image
   }
@@ -82,6 +85,11 @@ class GameScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
+    const playerPhoneText = this.add.text(240, 60, `Телефон: ${this.playerData.phone}`, {
+      fontSize: '20px',
+      fill: '#fff',
+    }).setOrigin(0.5);
+
     this.background = this.add.tileSprite(0, 0, 480, 800, 'background');
     this.background.setOrigin(0, 0);
 
@@ -90,6 +98,8 @@ class GameScene extends Phaser.Scene {
     this.player.setScale(0.3);
 
     this.score = 0;
+    this.hasShield = false; // Track shield state
+    this.shieldTimer = null; // Timer for shield duration
     this.scoreText = this.add.text(16, 16, 'Очки: 0', {
       fontSize: '32px',
       fill: '#fff',
@@ -127,6 +137,8 @@ class GameScene extends Phaser.Scene {
     this.input.on('pointermove', this.pointerMove, this);
 
     this.obstacles = this.physics.add.group();
+    this.powerUps = this.physics.add.group(); // Group for power-ups
+
     this.time.addEvent({
       delay: 1500,
       callback: this.spawnObstacle,
@@ -134,7 +146,22 @@ class GameScene extends Phaser.Scene {
       loop: true,
     });
 
+    this.time.addEvent({
+      delay: 10000, // Spawn shield power-up every 30 seconds
+      callback: this.spawnShieldPowerUp,
+      callbackScope: this,
+      loop: true,
+    });
+
     this.physics.add.overlap(this.player, this.obstacles, this.handleObstacleCollision, null, this);
+    this.physics.add.overlap(this.player, this.powerUps, this.collectPowerUp, null, this);
+
+    // Create shield timer text
+    this.shieldTimerText = this.add.text(240, 100, '', {
+      fontSize: '32px',
+      fill: '#fff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setVisible(false);
   }
 
   update() {
@@ -148,6 +175,12 @@ class GameScene extends Phaser.Scene {
 
     this.score += 0.01;
     this.scoreText.setText('Очки: ' + Math.floor(this.score));
+
+    // Update shield timer if shield is active
+    if (this.hasShield) {
+      const timeLeft = Math.ceil((this.shieldTimer.getRemaining() / 1000)); // Get remaining time in seconds
+      this.shieldTimerText.setText(`Щит: ${timeLeft}s`);
+    }
   }
 
   spawnObstacle() {
@@ -155,19 +188,73 @@ class GameScene extends Phaser.Scene {
 
     const obstacleType = Phaser.Math.Between(0, 1) === 0 ? 'dangerObstacle' : 'bonusObstacle';
     const xPosition = Phaser.Math.Between(50, 430);
-    const obstacle = this.obstacles.create(xPosition, 0, obstacleType).setVelocityY(200).setScale(0.2);
 
-    obstacle.isDanger = obstacleType === 'dangerObstacle';
+    const obstacle = this.obstacles.create(xPosition, 0, obstacleType).setScale(0.2);
+
+    if (obstacleType === 'dangerObstacle') {
+      let velocity = 200;
+      if (this.score >= 100) velocity = 250;
+      if (this.score >= 200) velocity = 400;
+      if (this.score >= 300) velocity = 450;
+      if (this.score >= 500) velocity = 500;
+      obstacle.setVelocityY(velocity);
+      obstacle.isDanger = true;
+    } else {
+      obstacle.setVelocityY(200);
+      obstacle.isDanger = false;
+    }
+  }
+
+  spawnShieldPowerUp() {
+    const xPosition = Phaser.Math.Between(50, 430);
+    const shield = this.powerUps.create(xPosition, 0, 'shieldPowerUp').setScale(0.2);
+    shield.setVelocityY(150);
+  }
+
+  collectPowerUp(player, powerUp) {
+    if (powerUp.texture.key === 'shieldPowerUp') {
+      this.activateShield();
+      powerUp.destroy();
+    }
+  }
+
+  activateShield() {
+    this.hasShield = true;
+
+    // Show the shield timer
+    this.shieldTimerText.setVisible(true);
+
+    // Optional: Visual feedback for shield activation (e.g., player glow)
+    this.player.setTint(0x00ff00);
+
+    if (this.shieldTimer) {
+      this.time.removeEvent(this.shieldTimer);
+    }
+
+    // Set a timer for the shield
+    this.shieldTimer = this.time.addEvent({
+      delay: 10000, // 10 seconds
+      callback: () => {
+        this.hasShield = false;
+        this.player.clearTint(); // Remove visual feedback
+        this.shieldTimerText.setVisible(false); // Hide the timer when shield expires
+      },
+      callbackScope: this,
+    });
   }
 
   async handleObstacleCollision(player, obstacle) {
     if (obstacle.isDanger) {
-      // Remove any existing explosion before creating a new one
+      if (this.hasShield) {
+        // Ignore collision while shield is active
+        obstacle.destroy();
+        return;
+      }
+
       if (this.explosion) {
         this.explosion.destroy();
       }
 
-      // Create a new explosion image at the obstacle's position
       this.explosion = this.add.image(obstacle.x, obstacle.y, 'explosion').setScale(0.2);
 
       this.physics.pause();
@@ -181,9 +268,9 @@ class GameScene extends Phaser.Scene {
       if (this.playerData && this.playerData.id) {
         try {
           await window.updateHighScore(this.playerData.id, finalScore);
-          console.log("High score updated successfully!");
+          console.log('High score updated successfully!');
         } catch (error) {
-          console.error("Error updating high score:", error);
+          console.error('Error updating high score:', error);
         }
       }
     } else {
@@ -193,29 +280,31 @@ class GameScene extends Phaser.Scene {
     obstacle.destroy();
   }
 
-
   restartGame() {
     this.endText.setVisible(false);
     this.restartButton.setVisible(false);
     this.score = 0;
     this.gameOver = false;
+    this.hasShield = false;
     this.player.clearTint();
     this.player.setPosition(240, 700);
     this.obstacles.clear(true, true);
+    this.powerUps.clear(true, true);
 
-    // Destroy the explosion image if it exists
     if (this.explosion) {
-        this.explosion.destroy();
-        this.explosion = null;
+      this.explosion.destroy();
+      this.explosion = null;
     }
 
     this.physics.resume();
-}
+  }
+
   pointerMove(pointer) {
     if (this.gameOver) return;
     this.player.setVelocityX(pointer.x < this.player.x ? -300 : 300);
   }
 }
+
 
 const config = {
   type: Phaser.AUTO,
