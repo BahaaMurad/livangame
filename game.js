@@ -5,6 +5,7 @@ class StartScene extends Phaser.Scene {
 
   preload() {
     this.load.image('startBackground', 'https://i.imgur.com/y2yUNvZ.png');
+    this.load.image('instructionsImage', 'https://i.imgur.com/J78rQWk.png'); // Load the instructions image
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
 
@@ -39,7 +40,8 @@ class StartScene extends Phaser.Scene {
       fontStyle: 'bold',
     })
       .setInteractive()
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setName('startButton');
 
     startButton.on('pointerdown', async () => {
       const playerName = document.getElementById('playerName').value.trim();
@@ -58,6 +60,60 @@ class StartScene extends Phaser.Scene {
         console.error('Error starting game:', error);
         alert('Произошла ошибка при запуске игры. Попробуйте снова.');
       }
+    });
+
+    const instructionsButton = this.add.text(240, 420, 'Инструкция', {
+      fontSize: '32px',
+      fill: '#fff',
+      backgroundColor: '#17cf35',
+      padding: { x: 10, y: 5 },
+      fontStyle: 'bold',
+    })
+      .setInteractive()
+      .setOrigin(0.5)
+      .setName('instructionsButton');
+
+      instructionsButton.on('pointerdown', () => {
+        const playerName = document.getElementById('playerName').value.trim();
+        const playerPhone = document.getElementById('playerPhone').value.trim();
+  
+        if (!playerName || !playerPhone) {
+          
+          return;
+        }
+  
+        this.showInstructions();
+      });
+    }
+
+  showInstructions() {
+    // Hide the main menu buttons
+    this.children.getByName('startButton').setVisible(false);
+    this.children.getByName('instructionsButton').setVisible(false);
+
+    // Display the instructions image
+    const instructionsImage = this.add.image(0, 0, 'instructionsImage')
+      .setOrigin(0)
+      .setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+
+    // Add Back to Start button
+    const backButton = this.add.text(240, 770, 'Назад в главное меню', {
+      fontSize: '32px',
+      fill: '#fff',
+      backgroundColor: '#cf3517',
+      padding: { x: 10, y: 5 },
+      fontStyle: 'bold',
+    })
+      .setInteractive()
+      .setOrigin(0.5);
+
+    backButton.on('pointerdown', () => {
+      instructionsImage.destroy(); // Destroy the instructions image
+      backButton.destroy(); // Destroy the back button
+
+      // Show the main menu buttons again
+      this.children.getByName('startButton').setVisible(true);
+      this.children.getByName('instructionsButton').setVisible(true);
     });
   }
 }
@@ -147,7 +203,7 @@ class GameScene extends Phaser.Scene {
     });
 
     this.time.addEvent({
-      delay: 10000, // Spawn shield power-up every 30 seconds
+      delay: 40000, // Spawn shield power-up every 40 seconds
       callback: this.spawnShieldPowerUp,
       callbackScope: this,
       loop: true,
