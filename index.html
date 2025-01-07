@@ -11,8 +11,7 @@
     <div id="nameForm">
       <input type="text" id="playerName" placeholder="Введите ваше имя!" required>
       <input type="tel" id="playerPhone" placeholder="Введите ваш номер телефона!" 
-  style="width: 270px; height: 30px; font-size: 18px; padding: 10px; border-radius: 10px;"
-   required>
+             style="width: 270px; height: 30px; font-size: 18px; padding: 10px; border-radius: 10px;" required>
       <button id="startButton">Начать игру</button>
     </div>
   </div>
@@ -22,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnMxgEnR2YYDmnuMMhhltvoC3rNYaSlS8",
@@ -56,10 +55,50 @@
       const playerRef = doc(db, "players", playerId);
       const playerDoc = await getDoc(playerRef);
 
-      if (playerDoc.exists() && currentScore > (playerDoc.data().highscore || 0)) {
-        await updateDoc(playerRef, { highscore: currentScore });
+      if (playerDoc.exists()) {
+        const existingScore = playerDoc.data().highscore || 0;
+        const newScore = existingScore + currentScore;
+        await updateDoc(playerRef, { highscore: newScore });
       }
     };
+
+    // Fetch highscore method added to the HTML file
+    window.fetchHighScore = async (playerId) => {
+      try {
+        const playerRef = doc(db, "players", playerId);
+        const playerDoc = await getDoc(playerRef);
+
+        if (playerDoc.exists()) {
+          const playerData = playerDoc.data();
+          return playerData.highscore || 0;
+        } else {
+          console.log("Player not found");
+          return 0;
+        }
+      } catch (error) {
+        console.error("Error fetching high score from Firebase:", error);
+        return 0;
+      }
+    };
+
+    window.fetchTopPlayers = async () => {
+  try {
+    const playersRef = collection(db, "players");
+    const q = query(playersRef, orderBy("highscore", "desc"), limit(5));
+    const querySnapshot = await getDocs(q);
+
+    const topPlayers = [];
+    querySnapshot.forEach((doc) => {
+      topPlayers.push({ name: doc.data().name, highscore: doc.data().highscore });
+    });
+
+    return topPlayers;
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    return [];
+  }
+};
+
 
     document.getElementById("startButton").addEventListener("click", async () => {
       const playerName = document.getElementById("playerName").value.trim();
