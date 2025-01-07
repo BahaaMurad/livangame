@@ -4,7 +4,7 @@ class StartScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('startBackground', 'https://i.imgur.com/y2yUNvZ.png');
+    this.load.image('startBackground', 'https://i.imgur.com/6okGws0.png');
     this.load.image('instructionsImage', 'https://i.imgur.com/J78rQWk.png'); // Load the instructions image
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
@@ -15,20 +15,6 @@ class StartScene extends Phaser.Scene {
     }
 
     this.backgroundMusic = this.sys.game.backgroundMusic;
-
-    const musicToggle = this.add.text(450, 16, '🔊', { fontSize: '32px', fill: '#fff' })
-      .setInteractive()
-      .setOrigin(0.5)
-      .setDepth(10)
-      .on('pointerdown', () => {
-        if (this.backgroundMusic.isPlaying) {
-          this.backgroundMusic.pause();
-          musicToggle.setText('🔇');
-        } else {
-          this.backgroundMusic.resume();
-          musicToggle.setText('🔊');
-        }
-      });
 
     this.add.image(240, 400, 'startBackground').setScale(0.5);
 
@@ -84,7 +70,69 @@ class StartScene extends Phaser.Scene {
   
         this.showInstructions();
       });
+
+      const leaderboardButton = this.add.text(240, 490, 'Таблица лидеров', {
+        fontSize: '32px',
+        fill: '#fff',
+        backgroundColor: '#1c87ff',
+        padding: { x: 10, y: 5 },
+        fontStyle: 'bold',
+      })
+        .setInteractive()
+        .setOrigin(0.5);
+      
+      // Handle leaderboard button click
+      leaderboardButton.on('pointerdown', async () => {
+        leaderboardButton.setVisible(false);
+        try {
+          // Use the existing fetchTopPlayers function from index.html
+          const topPlayers = await window.fetchTopPlayers();
+          this.showLeaderboard(topPlayers);
+        } catch (error) {
+          console.error('Error fetching leaderboard:', error);
+          alert('Не удалось загрузить таблицу лидеров. Попробуйте снова.');
+        }
+      });
+      
     }
+    showLeaderboard(topPlayers) {
+      // Hide main menu buttons
+      this.children.getByName('startButton').setVisible(false);
+      this.children.getByName('instructionsButton').setVisible(false);
+    
+      // Display leaderboard title
+      const title = this.add.text(240, 200, 'Таблица лидеров', {
+        fontSize: '48px',
+        fill: '#fff',
+        fontStyle: 'bold',
+        backgroundColor: '#425234',
+      }).setOrigin(0.5);
+    
+      // Display each player's high score
+      topPlayers.forEach((player, index) => {
+        this.add.text(240, 300 + index * 50, `${index + 1}. ${player.name}: ${player.highscore}`, {
+          fontSize: '32px',
+          fill: '#fff',
+          backgroundColor: '#425234',
+        }).setOrigin(0.5);
+      });
+    
+      // Back to Main Menu Button
+      const backButton = this.add.text(240, 600, 'Назад в меню', {
+        fontSize: '32px',
+        fill: '#fff',
+        backgroundColor: '#cf3517',
+        padding: { x: 10, y: 5 },
+        fontStyle: 'bold',
+      })
+        .setInteractive()
+        .setOrigin(0.5);
+    
+      backButton.on('pointerdown', () => {
+        this.scene.restart();
+      });
+    }
+    
 
   showInstructions() {
     // Hide the main menu buttons
@@ -132,7 +180,7 @@ class GameScene extends Phaser.Scene {
     this.load.image('explosion', 'https://i.imgur.com/O6KYKe2.png'); // Explosion image
   }
 
-  create(data) {
+  async create(data) {
     this.playerData = data.playerData;
 
     const playerNameText = this.add.text(240, 16, `Игрок: ${this.playerData.name}`, {
@@ -163,6 +211,19 @@ class GameScene extends Phaser.Scene {
       fontFamily: 'Arial',
       padding: { x: 10, y: 5 },
       backgroundColor: '#425234',
+    });
+
+    window.fetchHighScore(this.playerData.id).then((highscore) => {
+      this.highScoreText = this.add.text(16, 60, `Счет: ${highscore}`, {
+        fontSize: '32px',
+        fill: '#fff',
+        fontWeight: 'bold',
+        fontFamily: 'Arial',
+        padding: { x: 10, y: 5 },
+        backgroundColor: '#425234',
+      });
+    
+      this.currentHighScore = highscore;
     });
 
     this.endText = this.add.text(240, 300, 'Игра окончена!', {
@@ -213,7 +274,7 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.powerUps, this.collectPowerUp, null, this);
 
     // Create shield timer text
-    this.shieldTimerText = this.add.text(240, 100, '', {
+    this.shieldTimerText = this.add.text(240, 150, '', {
       fontSize: '32px',
       fill: '#fff',
       fontStyle: 'bold',
@@ -229,8 +290,6 @@ class GameScene extends Phaser.Scene {
     if (this.cursors.left.isDown) this.player.setVelocityX(-300);
     if (this.cursors.right.isDown) this.player.setVelocityX(300);
 
-    this.score += 0.01;
-    this.scoreText.setText('Очки: ' + Math.floor(this.score));
 
     // Update shield timer if shield is active
     if (this.hasShield) {
@@ -330,7 +389,7 @@ class GameScene extends Phaser.Scene {
         }
       }
     } else {
-      this.score += 5;
+      this.score += 1;
       this.scoreText.setText('Очки: ' + Math.floor(this.score));
     }
     obstacle.destroy();
