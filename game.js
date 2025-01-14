@@ -4,7 +4,7 @@ class StartScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('startBackground', 'https://i.imgur.com/6okGws0.png');
+    this.load.image('startBackground', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/startBackground.jpg');
     this.load.image('instructionsImage', 'https://i.imgur.com/J78rQWk.png'); // Load the instructions image
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
@@ -21,7 +21,7 @@ class StartScene extends Phaser.Scene {
     const startButton = this.add.text(240, 350, 'Начать игру', {
       fontSize: '32px',
       fill: '#fff',
-      backgroundColor: '#cf3517',
+      backgroundColor: '#880a09',
       padding: { x: 10, y: 5 },
       fontStyle: 'bold',
     })
@@ -51,7 +51,7 @@ class StartScene extends Phaser.Scene {
     const instructionsButton = this.add.text(240, 420, 'Инструкция', {
       fontSize: '32px',
       fill: '#fff',
-      backgroundColor: '#17cf35',
+      backgroundColor: '#880a09',
       padding: { x: 10, y: 5 },
       fontStyle: 'bold',
     })
@@ -74,7 +74,7 @@ class StartScene extends Phaser.Scene {
       const leaderboardButton = this.add.text(240, 490, 'Таблица лидеров', {
         fontSize: '32px',
         fill: '#fff',
-        backgroundColor: '#1c87ff',
+        backgroundColor: '#880a09',
         padding: { x: 10, y: 5 },
         fontStyle: 'bold',
       })
@@ -105,7 +105,7 @@ class StartScene extends Phaser.Scene {
         fontSize: '48px',
         fill: '#fff',
         fontStyle: 'bold',
-        backgroundColor: '#425234',
+        backgroundColor: '#880a09',
       }).setOrigin(0.5);
     
       // Display each player's high score
@@ -121,7 +121,7 @@ class StartScene extends Phaser.Scene {
       const backButton = this.add.text(240, 600, 'Назад в меню', {
         fontSize: '32px',
         fill: '#fff',
-        backgroundColor: '#cf3517',
+        backgroundColor: '#880a09',
         padding: { x: 10, y: 5 },
         fontStyle: 'bold',
       })
@@ -148,7 +148,7 @@ class StartScene extends Phaser.Scene {
     const backButton = this.add.text(240, 770, 'Назад в главное меню', {
       fontSize: '32px',
       fill: '#fff',
-      backgroundColor: '#cf3517',
+      backgroundColor: '#880a09',
       padding: { x: 10, y: 5 },
       fontStyle: 'bold',
     })
@@ -176,7 +176,7 @@ class GameScene extends Phaser.Scene {
     this.load.image('dangerObstacle', 'https://i.imgur.com/t9U0UAN.png');
     this.load.image('bonusObstacle', 'https://i.imgur.com/5HHXX0s.png');
     this.load.image('shieldPowerUp', 'https://i.imgur.com/E4OrBOX.png'); // Shield power-up image
-    this.load.image('background', 'https://i.imgur.com/R06cLdY.png');
+    this.load.image('background', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/background.jpg');//background.jpg
     this.load.image('explosion', 'https://i.imgur.com/O6KYKe2.png'); // Explosion image
   }
 
