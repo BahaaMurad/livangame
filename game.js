@@ -5,7 +5,7 @@ class StartScene extends Phaser.Scene {
 
   preload() {
     this.load.image('startBackground', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/startBackground.jpg');
-    this.load.image('instructionsImage', 'https://i.imgur.com/J78rQWk.png'); // Load the instructions image
+    this.load.image('instructionsImage', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/instructions-new.jpg'); // Load the instructions image
     this.load.audio('backgroundMusic', 'https://raw.githubusercontent.com/BahaaMurad/music/main/background-music.mp3');
   }
 
@@ -172,12 +172,12 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('player', 'https://i.imgur.com/q7ZEJHs.png');
-    this.load.image('dangerObstacle', 'https://i.imgur.com/t9U0UAN.png');
-    this.load.image('bonusObstacle', 'https://i.imgur.com/5HHXX0s.png');
-    this.load.image('shieldPowerUp', 'https://i.imgur.com/E4OrBOX.png'); // Shield power-up image
+    this.load.image('player', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/player.png'); //player.png
+    this.load.image('dangerObstacle', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/dangerObstacle.png'); //dangerObstacle.png
+    this.load.image('bonusObstacle', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/bonusObstacle.png'); //bonusObstacle.png
+    this.load.image('shieldPowerUp', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/1625125.png'); // Shield power-up image 1625125.png
     this.load.image('background', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/background.jpg');//background.jpg
-    this.load.image('explosion', 'https://i.imgur.com/O6KYKe2.png'); // Explosion image
+    this.load.image('explosion', 'https://raw.githubusercontent.com/BahaaMurad/livangame/main/images/Bomb-explosion-png.png'); // Explosion image Bomb-explosion-png.png
   }
 
   async create(data) {
@@ -308,10 +308,10 @@ class GameScene extends Phaser.Scene {
 
     if (obstacleType === 'dangerObstacle') {
       let velocity = 200;
-      if (this.score >= 100) velocity = 250;
-      if (this.score >= 200) velocity = 400;
-      if (this.score >= 300) velocity = 450;
-      if (this.score >= 500) velocity = 500;
+      if (this.score >= 10) velocity = 250;
+      if (this.score >= 20) velocity = 350;
+      if (this.score >= 30) velocity = 450;
+      if (this.score >= 50) velocity = 500;
       obstacle.setVelocityY(velocity);
       obstacle.isDanger = true;
     } else {
